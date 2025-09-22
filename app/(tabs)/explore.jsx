@@ -57,7 +57,7 @@ export default function App() {
   const [puzzle, setPuzzle] = useState([]);
   const [genSize, setGenSize] = useState([]);
   const [lastClicked, setLastClicked] = useState(false);
-
+  const [gridWidth, setGridWidth] = useState("w-1/7");
   const [values, setValues] = useState(
     Array.from({ length: puzzle?.cells?.length }, () => "")
   );
@@ -73,6 +73,7 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
 
   async function setPoints() {
+    console.log(testPuzzle);
     let puzzleIn = await generateCrossword(testPuzzle);
     console.log(puzzleIn);
     for (let clue of puzzleIn.clues) {
@@ -97,7 +98,9 @@ export default function App() {
     }
     puzzleIn.points = points;
     setPuzzle(puzzleIn);
+    const tilePercentWidth = puzzleIn?.gridSize ? 100 / puzzleIn.gridSize : 100;
 
+    setGridWidth(tilePercentWidth);
     setLoaded(true);
   }
 
@@ -133,7 +136,7 @@ export default function App() {
     }
   };
 
-  function swithDirection() {
+  async function swithDirection() {
     if (direction === "A") {
       direction = "D";
     } else {
@@ -141,7 +144,12 @@ export default function App() {
     }
   }
 
-  function setTileColours(selectedPoint, selectedPointObj) {
+  async function  setTileColours(selectedPoint, repeatTry) {
+    let clueTileFound = false;
+    console.log(direction)
+    let selectedPointObj = puzzle.points.find(
+      (o) => o.point === selectedPoint && o.direction === direction
+    );
     setTileClasses((prevValues) => {
       const updatedValues = [...prevValues];
       updatedValues[selectedPoint] = "selected";
@@ -151,11 +159,11 @@ export default function App() {
       let allCluePoints = puzzle.points.filter(
         (o) => o.clueId === selectedPointObj.clueId
       );
-      console.log(allCluePoints);
       for (let point in puzzle.cells) {
         if (point != selectedPoint) {
           let inClue = allCluePoints.find((o) => o.point === Number(point));
           if (inClue) {
+            clueTileFound = true;
             setTileClasses((prevValues) => {
               const updatedValues = [...prevValues];
               updatedValues[point] = "selectedProxy";
@@ -181,18 +189,24 @@ export default function App() {
         }
       }
     }
+    console.log(selectedPoint, selectedPointObj, repeatTry);
+    console.log(clueTileFound);
+    if (clueTileFound === false && repeatTry !== true) {
+      console.log("fired!!!");
+      await swithDirection()
+      await setTileColours(selectedPoint,true)
+    }
   }
 
-  function pointClicked(index, ignoreDirection) {
+  async function pointClicked(index, ignoreDirection, repeatTry) {
     console.log(lastClicked, index, ignoreDirection);
-    if (lastClicked === index && !ignoreDirection) {
-      swithDirection();
+    if (lastClicked === index && ignoreDirection !== true) {
+      console.log("Change direction", direction)
+      await swithDirection();
     }
     let obj = puzzle.points.find(
       (o) => o.point === index && o.direction === direction
     );
-    console.log(puzzle.points);
-    setTileColours(index, obj);
     if (obj) {
       setClue(obj.clue);
     } else {
@@ -201,9 +215,9 @@ export default function App() {
     if (!ignoreDirection) {
       setLastClicked(index);
     }
+    await setTileColours(index, repeatTry);
   }
 
-  console.log(puzzle.gridSize);
   useEffect(() => {
     setPoints();
   }, []);
@@ -216,13 +230,12 @@ export default function App() {
             {puzzle.cells.map((row, rowIndex) => (
               <View
                 key={rowIndex}
-                className={`aspect-square rounded-none border border-black 
+                style={{ width: `${gridWidth}%` }}
+                className={`aspect-square rounded-none border border-black ${gridWidth} 
                 ${
                   row === " "
-                    ? "bg-gray-400 border-gray-700" + " w-1/" + puzzle.gridSize
-                    : selectedClasses[tileClasses[rowIndex]] +
-                      " w-1/" +
-                      puzzle.gridSize
+                    ? "bg-gray-400 border-gray-700" + " w-1/"
+                    : selectedClasses[tileClasses[rowIndex]]
                 } }`}
               >
                 {row !== " " ? (
@@ -237,10 +250,10 @@ export default function App() {
                       ref={setItemRef(rowIndex)}
                       value={values[rowIndex]}
                       caretHidden={true}
+                      onFocus={()=> pointClicked(rowIndex,true)}
                       contextMenuHidden={true}
                       selectTextOnFocus={false}
                       autoCapitalize="characters"
-                      onFocus={() => pointClicked(rowIndex, true)}
                       className="absolute text-center w-0 h-0 "
                       onChangeText={(text) => {
                         handleChange(row, rowIndex, text.slice(-1));
