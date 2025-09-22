@@ -1,82 +1,100 @@
-import { useRef, useState } from "react";
-import { Button, Pressable, Text, TextInput, View, } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
+import { generateCrossword } from "../../scripts/crosswordGen";
 
-const puzzle = {
+let testPuzzle = {
+  title: "Crossword Puzzle",
   clues: [
-    { start: [0, 0], end: [0, 4], direction: "A", text: "First Clue" },
-    { start: [0, 0], end: [4, 0], direction: "D", text: "Second Clue" },
+    {
+      id: 1,
+      answer: "CATNIP",
+      text: "A plant that cats love",
+    },
+    {
+      id: 2,
+      answer: "SNAIL",
+      text: "A slow-moving gastropod with a shell",
+    },
+    {
+      id: 3,
+      answer: "ZEBRA",
+      text: "An African equine known for its stripes",
+    },
+    {
+      id: 4,
+      answer: "OCTOPUS",
+      text: "A sea creature with eight arms",
+    },
+    {
+      id: 5,
+      answer: "BEEHIVE",
+      text: "A home for honeybees",
+    },
+    {
+      id: 6,
+      answer: "WHALE",
+      text: "The largest mammal in the ocean",
+    },
   ],
-  solution: {
-    cells: [
-      ["H", "E", "L", "L", "O"],
-      ["E", " ", " ", " ", "W"],
-      ["L", " ", " ", " ", "S"],
-      ["L", " ", " ", " ", "O"],
-      ["O", "W", "N", "E", "D"],
-    ],
-  },
 };
 
-let maxRows = puzzle.solution.cells.length;
-let maxCols = puzzle.solution.cells[0].length;
 let points = [];
-for (let clue of puzzle.clues) {
-  let start = clue.start;
-  let end = clue.end;
-  for (let row = start[0]; row <= end[0]; row++) {
-    for (let col = start[1]; col <= end[1]; col++) {
-      points.push({
-        start: start,
-        end: end,
-        point: `${row},${col}`,
-        clue: clue.text,
-        direction: clue.direction,
-      });
-    }
-  }
-}
-puzzle.points = points;
-
-console.log(puzzle);
-let lastClicked = "";
 let direction = "A";
+
+const selectedClasses = {
+  notSelected: "bg-white",
+  selected: "bg-blue-500",
+  selectedProxy: "bg-yellow-400",
+  null: "bg-black",
+};
+
 export default function App() {
-  let test = [
-    "H",
-    "E",
-    "L",
-    "L",
-    "O",
-    "E",
-    " ",
-    " ",
-    " ",
-    "W",
-    "L",
-    " ",
-    " ",
-    " ",
-    "S",
-    "L",
-    " ",
-    " ",
-    " ",
-    "O",
-    "O",
-    "W",
-    "N",
-    "E",
-    "D",
-  ];
+  const [puzzle, setPuzzle] = useState([]);
+  const [genSize, setGenSize] = useState([]);
+  const [lastClicked, setLastClicked] = useState(false);
+
   const [values, setValues] = useState(
-    Array.from({ length: test.length }, () => "")
+    Array.from({ length: puzzle?.cells?.length }, () => "")
+  );
+  const [tileClasses, setTileClasses] = useState(
+    Array.from({ length: puzzle?.cells?.length }, () => "notSelected")
   );
   const tileRefs = useRef({});
   const [clue, setClue] = useState("");
   const setItemRef = (index) => (el) => {
-    console.log("Setting Ref", index);
     tileRefs.current[index] = el;
   };
+
+  const [loaded, setLoaded] = useState(false);
+
+  async function setPoints() {
+    let puzzleIn = await generateCrossword(testPuzzle);
+    console.log(puzzleIn);
+    for (let clue of puzzleIn.clues) {
+      let cell = clue.startCell;
+      for (let index = 0; index < clue.answer.length; index++) {
+        let point = cell;
+        if (index > 0) {
+          if (clue.direction === "D") {
+            point += index * puzzleIn.gridSize;
+          } else {
+            point += index;
+          }
+        }
+        points.push({
+          clueId: clue.id,
+          startCell: cell,
+          point: point,
+          clue: clue.text,
+          direction: clue.direction,
+        });
+      }
+    }
+    puzzleIn.points = points;
+    setPuzzle(puzzleIn);
+
+    setLoaded(true);
+  }
 
   const handleChange = (row, rowIndex, value) => {
     setValues((prevValues) => {
@@ -85,6 +103,29 @@ export default function App() {
       updatedValues[rowIndex] = value.toUpperCase();
       return updatedValues;
     });
+    let nextPoint = Number(rowIndex);
+    let pass = false;
+    if (direction === "D") {
+      nextPoint += puzzle.gridSize;
+      if (nextPoint <= puzzle.cells.length) {
+        pass = true;
+        console.log("Tile Down", pass);
+      }
+    } else {
+      nextPoint += 1;
+      if (
+        nextPoint <= puzzle.cells.length &&
+        nextPoint % puzzle.gridSize != 0
+      ) {
+        pass = true;
+        console.log("Tile Accross", pass);
+      }
+    }
+    if (pass === true) {
+      console.log("Passed");
+      console.log(nextPoint, tileRefs.current[Number(nextPoint)]);
+      tileRefs.current[Number(nextPoint)]?.focus();
+    }
   };
 
   function swithDirection() {
@@ -95,58 +136,126 @@ export default function App() {
     }
   }
 
-  function pointClicked(r, c) {
-    let point = `${r},${c}`;
-    if (lastClicked[0] === r && lastClicked[1] === c) {
+  function setTileColours(selectedPoint, selectedPointObj) {
+    setTileClasses((prevValues) => {
+      const updatedValues = [...prevValues];
+      updatedValues[selectedPoint] = "selected";
+      return updatedValues;
+    });
+    if (selectedPointObj) {
+      let allCluePoints = puzzle.points.filter(
+        (o) => o.clueId === selectedPointObj.clueId
+      );
+      console.log(allCluePoints);
+      for (let point in puzzle.cells) {
+        if (point != selectedPoint) {
+          let inClue = allCluePoints.find((o) => o.point === Number(point));
+          if (inClue) {
+            setTileClasses((prevValues) => {
+              const updatedValues = [...prevValues];
+              updatedValues[point] = "selectedProxy";
+              return updatedValues;
+            });
+          } else {
+            setTileClasses((prevValues) => {
+              const updatedValues = [...prevValues];
+              updatedValues[point] = "notSelected";
+              return updatedValues;
+            });
+          }
+        }
+      }
+    } else {
+      for (let point in puzzle.cells) {
+        if (point != selectedPoint) {
+          setTileClasses((prevValues) => {
+            const updatedValues = [...prevValues];
+            updatedValues[point] = "notSelected";
+            return updatedValues;
+          });
+        }
+      }
+    }
+  }
+
+  function pointClicked(index, ignoreDirection) {
+    console.log(lastClicked, index, ignoreDirection);
+    if (lastClicked === index && !ignoreDirection) {
       swithDirection();
     }
     let obj = puzzle.points.find(
-      (o) => o.point === point && o.direction === direction
+      (o) => o.point === index && o.direction === direction
     );
+    console.log(puzzle.points);
+    setTileColours(index, obj);
     if (obj) {
       setClue(obj.clue);
     } else {
       setClue("");
     }
-    lastClicked = [r, c];
+    if (!ignoreDirection) {
+      setLastClicked(index);
+    }
+  }
+
+  console.log(puzzle.gridSize);
+  useEffect(() => {
+    setPoints();
+  }, []);
+
+  if (loaded) {
+    return (
+      <View className="flex-1 bg-white">
+        <View className="flex items-center">
+          <View className="p-5 mt-5 max-w-[1000px] flex-row flex-wrap w-full">
+            {puzzle.cells.map((row, rowIndex) => (
+              <View
+                key={rowIndex}
+                className={`w-1/7 aspect-square rounded-none border border-black 
+                ${
+                  row === " "
+                    ? "bg-gray-400 border-gray-700"
+                    : selectedClasses[tileClasses[rowIndex]]
+                } }`}
+              >
+                {row !== " " ? (
+                  <Pressable
+                    className="flex items-center justify-center border-none rounded-none text-center w-full h-full"
+                    onPress={() => {
+                      tileRefs.current[rowIndex].focus();
+                      pointClicked(rowIndex);
+                    }}
+                  >
+                    <TextInput
+                      ref={setItemRef(rowIndex)}
+                      value={values[rowIndex]}
+                      caretHidden={true}
+                      contextMenuHidden={true}
+                      selectTextOnFocus={false}
+                      autoCapitalize="characters"
+                      onFocus={() => pointClicked(rowIndex, true)}
+                      className="absolute text-center w-0 h-0 "
+                      onChangeText={(text) => {
+                        handleChange(row, rowIndex, text.slice(-1));
+                      }}
+                    />
+                    <Text className="border-none rounded-none text-center align-middle text-lg font-bold">
+                      {values[rowIndex]}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ))}
+          </View>
+          <Text>{clue}</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="flex items-center">
-        <View
-          className="p-10 max-w-[1000px]"
-        >
-          {test.map((row, rowIndex) => (
-            <View
-              key={rowIndex}
-              ref={setItemRef(rowIndex)}
-              className=" aspect-square  border border-black"
-            >
-              <Pressable
-                className="border-none rounded-none text-center w-full h-full"
-                onPress={() => {}}
-              >
-                <TextInput
-                  value={values[rowIndex]}
-                  autoCapitalize="characters"
-                  className="border-none rounded-none text-center w-full h-full"
-                  onChangeText={(text) => {
-                    handleChange(row, rowIndex, text.slice(-1));
-                  }}
-                />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-        <Text>{clue}</Text>
-        <Button
-          title="Test"
-          onPress={() => {
-            console.log("Refs:", tileRefs);
-          }}
-        ></Button>
-      </View>
+    <View>
+      <Text>Loading....</Text>
     </View>
   );
 }
