@@ -7,33 +7,38 @@ let testPuzzle = {
   clues: [
     {
       id: 1,
-      answer: "CATNIP",
-      text: "A plant that cats love",
+      answer: "PENCIL",
+      text: "A writing tool with a graphite core",
     },
     {
       id: 2,
-      answer: "SNAIL",
-      text: "A slow-moving gastropod with a shell",
+      answer: "RAINBOW",
+      text: "An arc of colored light in the sky",
     },
     {
       id: 3,
-      answer: "ZEBRA",
-      text: "An African equine known for its stripes",
+      answer: "PIZZA",
+      text: "A popular Italian dish with a round, flat base",
     },
     {
       id: 4,
-      answer: "OCTOPUS",
-      text: "A sea creature with eight arms",
+      answer: "OCEAN",
+      text: "A large body of saltwater",
     },
     {
       id: 5,
-      answer: "BEEHIVE",
-      text: "A home for honeybees",
+      answer: "TIGER",
+      text: "A large, striped feline predator",
     },
     {
       id: 6,
-      answer: "WHALE",
-      text: "The largest mammal in the ocean",
+      answer: "APPLE",
+      text: "A common fruit that can be red, green, or yellow",
+    },
+    {
+      id: 7,
+      answer: "CACTUS",
+      text: "A spiny desert plant",
     },
   ],
 };
@@ -211,11 +216,13 @@ export default function App() {
             {puzzle.cells.map((row, rowIndex) => (
               <View
                 key={rowIndex}
-                className={`w-1/7 aspect-square rounded-none border border-black 
+                className={`aspect-square rounded-none border border-black 
                 ${
                   row === " "
-                    ? "bg-gray-400 border-gray-700"
-                    : selectedClasses[tileClasses[rowIndex]]
+                    ? "bg-gray-400 border-gray-700" + " w-1/" + puzzle.gridSize
+                    : selectedClasses[tileClasses[rowIndex]] +
+                      " w-1/" +
+                      puzzle.gridSize
                 } }`}
               >
                 {row !== " " ? (
