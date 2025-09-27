@@ -34,6 +34,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-
       - name: Build Android app
         run: eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.aab
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-release
+          path: ${{ github.workspace }}/app-release.aab
