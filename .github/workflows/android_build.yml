@@ -2,9 +2,11 @@ name: Android App Build
 
 on:
   workflow_dispatch
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, default]
+
     steps:
       - name: Setup repo
         uses: actions/checkout@v4
@@ -34,7 +36,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-
       - name: Build Android app
         run: eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.aab
 
@@ -43,4 +44,3 @@ jobs:
         with:
           name: app-release
           path: ${{ github.workspace }}/app-release.aab
-
