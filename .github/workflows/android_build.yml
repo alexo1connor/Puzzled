@@ -5,7 +5,6 @@ on:
 
 jobs:
   build:
-    # Use your Coolify self-hosted runner
     runs-on: [self-hosted, default]
 
     steps:
@@ -18,16 +17,18 @@ jobs:
           node-version: 20.x
           cache: "yarn"
 
-      # Enable Corepack and prepare Yarn (Node 16+ includes corepack)
-      - name: Enable Corepack & prepare Yarn
+      # Install Yarn globally so the `yarn` executable is on PATH
+      - name: Install Yarn globally
         run: |
-          corepack enable
-          corepack prepare yarn@stable --activate
+          # npm v9+/10 supports --location=global to avoid permission issues on some setups
+          npm install -g yarn --location=global
           yarn --version
 
       # Install EAS CLI (used by eas build)
       - name: Install eas-cli
-        run: npm install -g eas-cli
+        run: |
+          npm install -g eas-cli --location=global
+          eas --version || echo "eas not found"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -47,9 +48,11 @@ jobs:
 
       - name: Show versions (debug)
         run: |
+          echo "PATH: $PATH"
           node --version
+          npm --version
           yarn --version
-          eas --version || echo "eas not found"
+          eas --version || echo "eas not available"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
