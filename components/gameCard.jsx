@@ -1,13 +1,31 @@
-import { Text, View } from "react-native";
+import LottieView from "lottie-react-native";
+import { useEffect, useRef } from "react";
+import { StyleSheet, View } from "react-native";
 
-export function GameCard({ title, description }) {
+export default function App() {
+  const animation = useRef(null);
+
+  useEffect(() => {
+    animation.current?.play(); // start animation
+  }, []);
+
   return (
-    <View className="bg-blue-500 p-5 shadow-[10px] rounded">
-      {/* If Text border looks wrong, wrap it in a View */}
-      <View className="">
-        <Text className="text-white">{title}</Text>
-        <Text className="text-white mt-2">{description}</Text>
-      </View>
+    <View style={styles.container}>
+      <LottieView
+        ref={animation}
+        source={require("../assets/animations/Fish.json")}
+        autoPlay
+        loop
+        style={{ width: 300, height: 300 }}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
