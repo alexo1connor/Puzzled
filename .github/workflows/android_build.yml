@@ -21,7 +21,7 @@ jobs:
         run: npm install -g yarn
 
       - name: Set Gradle memory
-        run: echo "org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-9" >> $HOME/.gradle/gradle.properties
+        run: echo "org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-12" >> $HOME/.gradle/gradle.properties
 
 
       - name: Set up JDK 17
@@ -42,9 +42,12 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        
+      - name: Disable Gradle Daemon
+        run: echo "org.gradle.daemon=false" >> android/gradle.properties
 
       - name: Build Android app
-        run: eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.aab --no-daemon
+        run: eas build --platform android --profile production --local --output ${{ github.workspace }}/app-release.aab
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
