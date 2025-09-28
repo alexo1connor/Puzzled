@@ -20,6 +20,9 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
+      - name: Configure Gradle JVM args
+        run: echo "org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8" >> $HOME/.gradle/gradle.properties
+        
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
