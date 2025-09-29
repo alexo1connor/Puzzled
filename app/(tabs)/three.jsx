@@ -1,7 +1,6 @@
 // components/Animation.js
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, View } from "react-native";
-import Rive from 'rive-react-native';
 
 /**
  * Cross-platform Rive component that:
@@ -97,7 +96,7 @@ export default function Animation({
           justifyContent: "center",
         }}
       >
-        {/* Replace with an Image or static fallback if desired */}
+        <Text>PlayerComp failed</Text>
       </View>
     );
   }
@@ -124,7 +123,7 @@ export default function Animation({
   console.log("Mobile", RiveNative);
 
   return (
-    <Rive
+    <RiveNative
       url="https://public.rive.app/community/runtime-files/2195-4346-avatar-pack-use-case.riv"
       artboardName="Avatar 1"
       stateMachineName="avatar"
