@@ -1,8 +1,12 @@
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
 
-const config = getDefaultConfig(__dirname);
+let config = getDefaultConfig(__dirname);
 
-config.resolver.assetExts.push("riv");
+// add riv to asset extensions
+config.resolver.assetExts = [...(config.resolver.assetExts || []), "riv"];
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+// wrap with nativewind
+config = withNativeWind(config, { input: "./global.css" });
+
+module.exports = config;

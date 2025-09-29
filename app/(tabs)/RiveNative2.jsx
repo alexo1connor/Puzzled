@@ -4,8 +4,8 @@ import Rive from "rive-react-native";
 export default function App() {
   return (
     <Rive
-      resourceName="blob"
-      stateMachineName="State Machine 1"
+      resourceName="holo_card"
+      stateMachineName="cardInteractivity"
       fit="cover"
       autoplay
     />
